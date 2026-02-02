@@ -26,8 +26,9 @@ func CreateReplDeploymentAndService(userName, replId, template string) error {
 		return fmt.Errorf("unsupported template: %s", template)
 	}
 
-	region := dotenv.EnvString("SPACES_REGION", "blr1")
-	bucket := dotenv.EnvString("SPACES_BUCKET", "devex")
+	bucket := dotenv.EnvString("S3_BUCKET", "devex")
+	endpoint := dotenv.EnvString("S3_ENDPOINT", "https://<account_id>.r2.cloudflarestorage.com")
+	region := dotenv.EnvString("S3_REGION", "us-east-1")
 
 	labels := map[string]string{
 		"app":      replId,
@@ -63,7 +64,7 @@ func CreateReplDeploymentAndService(userName, replId, template string) error {
 							Image:   "amazon/aws-cli",
 							Command: []string{"sh", "-c"},
 							Args: []string{
-								fmt.Sprintf(`aws s3 cp s3://%s/repl/%s/%s/ /workspaces --recursive --endpoint-url https://%s.digitaloceanspaces.com && echo "Resources copied from DO Spaces";`, bucket, userName, replId, region),
+								fmt.Sprintf(`aws s3 cp s3://%s/repl/%s/%s/ /workspaces --recursive --endpoint-url %s --region %s && echo "Resources copied from S3/R2";`, bucket, userName, replId, endpoint, region),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{

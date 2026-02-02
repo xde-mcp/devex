@@ -17,13 +17,14 @@ func DeleteReplDeploymentAndService(userName, replId string) error {
 	clientset, _ := getClientSet()
 	ctx := context.Background()
 
-	region := dotenv.EnvString("SPACES_REGION", "blr1")
-	bucket := dotenv.EnvString("SPACES_BUCKET", "devex")
+	bucket := dotenv.EnvString("S3_BUCKET", "devex")
+	endpoint := dotenv.EnvString("S3_ENDPOINT", "https://<account_id>.r2.cloudflarestorage.com")
+	region := dotenv.EnvString("S3_REGION", "us-east-1")
 
-	// Step 1: Upload workspace from pod to DigitalOcean Spaces
-	log.Println("📤 Uploading workspace from pod to DigitalOcean Spaces...")
+	// Step 1: Upload workspace from pod to S3/R2
+	log.Println("📤 Uploading workspace from pod to S3/R2...")
 
-	if err := InjectEphemeralUploader(clientset, ctx, replId, userName, region, bucket); err != nil {
+	if err := InjectEphemeralUploader(clientset, ctx, replId, userName, endpoint, bucket, region); err != nil {
 		log.Printf("⚠️ Failed to inject uploader: %v", err)
 	} else {
 		log.Printf("✅ Uploaded /workspaces to s3://devex/repl/%s/%s/", userName, replId)
@@ -65,7 +66,7 @@ func DeleteReplDeploymentAndService(userName, replId string) error {
 }
 
 // InjectEphemeralUploader injects an ephemeral container into the running REPL pod to upload files
-func InjectEphemeralUploader(clientset *kubernetes.Clientset, ctx context.Context, replId, userName, region, bucket string) error {
+func InjectEphemeralUploader(clientset *kubernetes.Clientset, ctx context.Context, replId, userName, endpoint, bucket, region string) error {
 	const namespace = "default"
 
 	// Fetch the target pod
@@ -84,7 +85,7 @@ func InjectEphemeralUploader(clientset *kubernetes.Clientset, ctx context.Contex
 			Image:   "amazon/aws-cli",
 			Command: []string{"sh", "-c"},
 			Args: []string{
-				fmt.Sprintf(`aws s3 cp /workspaces s3://%s/repl/%s/%s/ --recursive --endpoint-url https://%s.digitaloceanspaces.com`, bucket, userName, replId, region),
+				fmt.Sprintf(`aws s3 cp /workspaces s3://%s/repl/%s/%s/ --recursive --endpoint-url %s --region %s`, bucket, userName, replId, endpoint, region),
 			},
 			VolumeMounts: []corev1.VolumeMount{
 				{

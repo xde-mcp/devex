@@ -113,7 +113,7 @@ services:
   # Main application backend that handles:
   # - User authentication via GitHub OAuth
   # - REPL management and orchestration
-  # - File operations with DigitalOcean Spaces (S3-compatible)
+  # - File operations with S3/R2 Storage
   # - Kubernetes cluster communication
   # ============================================================================
   core_service:
@@ -130,10 +130,10 @@ services:
 
     # Environment Variables Configuration
     environment:
-      # ---- DIGITALOCEAN SPACES CONFIGURATION ----
-      SPACES_REGION: "blr1" # Bangalore region
-      SPACES_BUCKET: "devex" # Bucket name for file storage
-      SPACES_ENDPOINT: "https://blr1.digitaloceanspaces.com" # S3-compatible endpoint
+      # ---- S3 / R2 STORAGE CONFIGURATION ----
+      S3_REGION: "us-east-1" # Region (auto for R2)
+      S3_BUCKET: "devex" # Bucket name for file storage
+      S3_ENDPOINT: "https://ebaadcbaf7cec2ca0e78757ec8cbd05e.r2.cloudflarestorage.com" # S3-compatible endpoint
 
       # ---- KUBERNETES CONFIGURATION ----
       RUNNER_DOCKER_IMAGE: "ghcr.io/parthkapoor-dev/devex/runner-service:latest" # Container image for REPLs
@@ -152,11 +152,11 @@ services:
     # Docker Secrets Configuration
     # Secrets are stored externally in Docker Swarm and mounted securely
     secrets:
-      # DigitalOcean Spaces credentials (S3-compatible storage)
-      - source: spaces_access_key
-        target: SPACES_ACCESS_KEY
-      - source: spaces_secret_key
-        target: SPACES_SECRET_KEY
+      # S3/R2 Storage credentials
+      - source: s3_access_key
+        target: S3_ACCESS_KEY
+      - source: s3_secret_key
+        target: S3_SECRET_KEY
 
       # Redis connection URL for session storage and caching
       - source: redis_url
@@ -231,11 +231,11 @@ volumes:
 # docker secret rm secret_name
 # ==============================================================================
 secrets:
-  # DigitalOcean Spaces (S3-compatible) credentials
-  spaces_access_key:
-    external: true # Must be created externally: docker secret create spaces_access_key -
-  spaces_secret_key:
-    external: true # Must be created externally: docker secret create spaces_secret_key -
+  # S3/R2 Storage credentials
+  s3_access_key:
+    external: true # Must be created externally: docker secret create s3_access_key -
+  s3_secret_key:
+    external: true # Must be created externally: docker secret create s3_secret_key -
 
   # Redis connection configuration
   redis_url:
@@ -287,8 +287,8 @@ secrets:
 #    - Verify secrets are properly created and accessible
 #
 # 4. File Storage Issues:
-#    - Test DigitalOcean Spaces connectivity
-#    - Verify spaces credentials and permissions
+#    - Test S3/R2 connectivity
+#    - Verify storage credentials and permissions
 #    - Check bucket exists and is accessible
 #
 # 5. Kubernetes Issues:

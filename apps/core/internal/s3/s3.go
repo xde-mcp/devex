@@ -17,11 +17,11 @@ import (
 )
 
 var (
-	spacesAccessKey = dotenv.EnvString("SPACES_ACCESS_KEY", "YOUR_SPACES_ACCESS_KEY")
-	spacesSecretKey = dotenv.EnvString("SPACES_SECRET_KEY", "YOUR_SPACES_SECRET_KEY")
-	spacesRegion    = dotenv.EnvString("SPACES_REGION", "blr1")
-	spacesBucket    = dotenv.EnvString("SPACES_BUCKET", "devex")
-	spacesEndpoint  = dotenv.EnvString("SPACES_ENDPOINT", "https://blr1.digitaloceanspaces.com")
+	accessKey = dotenv.EnvString("S3_ACCESS_KEY", "YOUR_S3_ACCESS_KEY")
+	secretKey = dotenv.EnvString("S3_SECRET_KEY", "YOUR_S3_SECRET_KEY")
+	region    = dotenv.EnvString("S3_REGION", "auto")
+	bucket    = dotenv.EnvString("S3_BUCKET", "devex")
+	endpoint  = dotenv.EnvString("S3_ENDPOINT", "https://<account_id>.r2.cloudflarestorage.com")
 )
 
 type S3Client struct {
@@ -33,15 +33,15 @@ func NewS3Client() *S3Client {
 	ctx := context.TODO()
 
 	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(spacesRegion),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(spacesAccessKey, spacesSecretKey, "")),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
 	)
 	if err != nil {
 		log.Printf("❌ Failed to load config: %v", err)
 	}
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(spacesEndpoint)
+		o.BaseEndpoint = aws.String(endpoint)
 		o.UsePathStyle = true
 	})
 
@@ -54,7 +54,7 @@ func NewS3Client() *S3Client {
 // To Ping the S3 Connection
 func (s *S3Client) Ping() error {
 	input := &s3.HeadBucketInput{
-		Bucket: aws.String(spacesBucket),
+		Bucket: aws.String(bucket),
 	}
 
 	_, err := s.client.HeadBucket(s.ctx, input)
@@ -70,7 +70,7 @@ func (s *S3Client) CopyFolder(sourcePrefix, destinationPrefix string) error {
 	for {
 		// Step 1: List objects
 		listInput := &s3.ListObjectsV2Input{
-			Bucket:            aws.String(spacesBucket),
+			Bucket:            aws.String(bucket),
 			Prefix:            aws.String(sourcePrefix),
 			ContinuationToken: continuationToken,
 		}
@@ -98,14 +98,14 @@ func (s *S3Client) CopyFolder(sourcePrefix, destinationPrefix string) error {
 			relativeKey := strings.TrimPrefix(sourceKey, sourcePrefix)
 			destinationKey := path.Join(destinationPrefix, relativeKey)
 
-			// Fix: Use simple bucket/key format for DigitalOcean Spaces
-			copySource := spacesBucket + "/" + sourceKey
+			// Fix: Use simple bucket/key format for S3/R2
+			copySource := bucket + "/" + sourceKey
 
 			copyInput := &s3.CopyObjectInput{
-				Bucket:     aws.String(spacesBucket),
+				Bucket:     aws.String(bucket),
 				CopySource: aws.String(copySource),
 				Key:        aws.String(destinationKey),
-				// Remove ACL for DigitalOcean Spaces compatibility
+				// Remove ACL for S3/R2 compatibility if not needed
 			}
 
 			_, err := s.client.CopyObject(s.ctx, copyInput)
@@ -130,7 +130,7 @@ func (s *S3Client) CopyFolder(sourcePrefix, destinationPrefix string) error {
 
 func (s *S3Client) ListObjects(prefix string) error {
 	input := &s3.ListObjectsV2Input{
-		Bucket: aws.String(spacesBucket),
+		Bucket: aws.String(bucket),
 		Prefix: aws.String(prefix),
 	}
 
@@ -158,7 +158,7 @@ func (s *S3Client) DeleteFolder(folderPrefix string) error {
 	for {
 		// Step 1: List objects under the folder prefix
 		listInput := &s3.ListObjectsV2Input{
-			Bucket:            aws.String(spacesBucket),
+			Bucket:            aws.String(bucket),
 			Prefix:            aws.String(folderPrefix),
 			ContinuationToken: continuationToken,
 		}
@@ -176,7 +176,7 @@ func (s *S3Client) DeleteFolder(folderPrefix string) error {
 		// Step 2: Delete each object
 		for _, obj := range output.Contents {
 			deleteInput := &s3.DeleteObjectInput{
-				Bucket: aws.String(spacesBucket),
+				Bucket: aws.String(bucket),
 				Key:    obj.Key,
 			}
 
