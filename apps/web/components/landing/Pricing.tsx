@@ -357,7 +357,7 @@ export default function DevXPricing() {
         className="mt-16 text-center"
       >
         <p className="text-gray-400 mb-4">
-          Need something custom? We're here to help.
+          Need something custom? We&apos;re here to help.
         </p>
         <Link
           href="/contact"

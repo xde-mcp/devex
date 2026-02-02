@@ -42,12 +42,12 @@ export default function Footer() {
 
       <div className="glass relative mx-auto flex max-w-6xl flex-col items-center gap-8 rounded-2xl px-6 py-10 md:flex-row md:items-start md:justify-between md:gap-12">
         <div className="flex flex-col items-center md:items-start">
-          <a href="/" className="mb-4 flex items-center gap-2">
+          <Link href="/" className="mb-4 flex items-center gap-2">
             <DevExLogoDark height={35} width={35} />
             <span className="bg-gradient-to-br from-emerald-300 to-teal-400 bg-clip-text text-xl font-semibold tracking-tight text-transparent">
               devX
             </span>
-          </a>
+          </Link>
           <p className="mb-6 max-w-lg text-center text-sm text-gray-300 md:text-left">
             DevX is an open-source cloud IDE platform where users can spin up
             live REPLs, code in the browser, and access full terminals — all
@@ -90,14 +90,14 @@ export default function Footer() {
                 <Github className="h-4 w-4" />
                 Contribute
               </a>
-              <a
+              <Link
                 href="/docs"
                 aria-label="Documentation"
                 className="flex items-center gap-2 rounded-lg bg-black/30 px-4 py-2 text-sm text-gray-300 transition-all hover:bg-black/40 hover:text-teal-400 border border-gray-600/30"
               >
                 <BookOpen className="h-4 w-4" />
                 Docs
-              </a>
+              </Link>
             </div>
           </div>
         </nav>

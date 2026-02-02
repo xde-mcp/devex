@@ -42,8 +42,31 @@ const TreeItem: React.FC<TreeItemProps> = ({
 
   const [isCollapsed, setIsCollapsed] = useState(true);
 
+  const isFile =
+    typeof item === "string" || item.content || name.endsWith(".md");
+
+  const hasChildren =
+    !isFile && item && typeof item === "object" && Object.keys(item).length > 0;
+
+  const hasActiveChild = hasChildren
+    ? Object.entries(item.children).some(([childName, childItem]) => {
+        const childFullPath = `${fullPath}/${childName}`;
+        return (
+          currentPath === childFullPath ||
+          currentPath === `${childFullPath}.md` ||
+          currentPath.startsWith(`${childFullPath}/`)
+        );
+      })
+    : false;
+
+  useEffect(() => {
+    if (hasActiveChild && isCollapsed) {
+      setIsCollapsed(false);
+    }
+  }, [hasActiveChild, isCollapsed]);
+
   // If it's a file (has content property or is a markdown file)
-  if (typeof item === "string" || item.content || name.endsWith(".md")) {
+  if (isFile) {
     const href =
       fullPath === "README.md" ? "/docs" : `/docs/${pathToSlug(fullPath)}`;
 
@@ -70,32 +93,9 @@ const TreeItem: React.FC<TreeItemProps> = ({
     );
   }
 
-  // If it's a directory
-  const hasChildren =
-    item && typeof item === "object" && Object.keys(item).length > 0;
-
   if (!hasChildren) {
     return null;
   }
-
-  // Check if any child is currently active (for auto-expand)
-  const hasActiveChild = Object.entries(item.children).some(
-    ([childName, childItem]) => {
-      const childFullPath = `${fullPath}/${childName}`;
-      return (
-        currentPath === childFullPath ||
-        currentPath === `${childFullPath}.md` ||
-        currentPath.startsWith(`${childFullPath}/`)
-      );
-    },
-  );
-
-  // Auto-expand if has active child
-  useEffect(() => {
-    if (hasActiveChild && isCollapsed) {
-      setIsCollapsed(false);
-    }
-  }, [hasActiveChild, isCollapsed]);
 
   // Separate and sort children: files first, then folders
   const children = Object.entries(item.children);

@@ -152,7 +152,9 @@ export const FileFinder = ({
         />
         <CommandMenuList maxHeight="400px">
           {Object.keys(groupedItems).length === 0 ? (
-            <CommandMenuEmpty>No results found for "{value}"</CommandMenuEmpty>
+            <CommandMenuEmpty>
+              No results found for &quot;{value}&quot;
+            </CommandMenuEmpty>
           ) : (
             Object.entries(groupedItems).map(([type, items], groupIndex) => (
               <React.Fragment key={type}>

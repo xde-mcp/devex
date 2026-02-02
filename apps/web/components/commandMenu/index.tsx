@@ -247,7 +247,7 @@ export const Cmd = () => {
             <CommandMenuList maxHeight="400px">
               {Object.keys(groupedItems).length === 0 ? (
                 <CommandMenuEmpty>
-                  No results found for "{value}"
+                  No results found for &quot;{value}&quot;
                 </CommandMenuEmpty>
               ) : (
                 Object.entries(groupedItems).map(
@@ -314,7 +314,7 @@ export const Cmd = () => {
                 </div>
               ) : docsSearchResults.length === 0 && docsSearchQuery.trim() ? (
                 <CommandMenuEmpty>
-                  No documentation found for "{docsSearchQuery}"
+                  No documentation found for &quot;{docsSearchQuery}&quot;
                 </CommandMenuEmpty>
               ) : docsSearchResults.length > 0 ? (
                 <CommandMenuGroup

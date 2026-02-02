@@ -15,6 +15,7 @@ import {
 } from "motion/react";
 
 import React, { RefObject, useRef, useState } from "react";
+import Link from "next/link";
 import { Cmd } from "../commandMenu";
 import { DevExLogoDark } from "../icons/logo";
 
@@ -407,7 +408,7 @@ export const MobileNavToggle = ({
 
 export const NavbarLogo = () => {
   return (
-    <a
+    <Link
       href="/"
       className="relative z-20 mr-4 flex items-center gap-2 px-2 py-1 text-sm font-normal text-black"
     >
@@ -416,7 +417,7 @@ export const NavbarLogo = () => {
       <span className="font-medium text-lg text-black dark:text-white">
         devX
       </span>
-    </a>
+    </Link>
   );
 };
 

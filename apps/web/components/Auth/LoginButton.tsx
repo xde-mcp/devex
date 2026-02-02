@@ -111,7 +111,7 @@ export function LoginButton() {
               <div className="text-sm text-amber-200">
                 <p className="font-medium mb-1">Limited DevOps Features</p>
                 <p className="text-amber-300/80">
-                  Magic Link authentication doesn't support GitHub integrations,
+                  Magic Link authentication doesn&apos;t support GitHub integrations,
                   CI/CD pipelines, and repository management features.
                 </p>
               </div>
