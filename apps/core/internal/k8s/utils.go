@@ -12,12 +12,31 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
 var KUBE_CONFIG_PATH = dotenv.EnvString("KUBE_CONFIG_PATH", filepath.Join(homedir.HomeDir(), ".kube", "config"))
+
+// Initializes the K8s dynamic client
+func getDynamicClient() (dynamic.Interface, error) {
+	kubeconfig := KUBE_CONFIG_PATH
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+	if err != nil {
+		log.Printf("Failed to load kubeconfig: %v", err)
+		return nil, err
+	}
+
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		log.Printf("Failed to create dynamic client: %v", err)
+		return nil, err
+	}
+
+	return dynamicClient, nil
+}
 
 // Initializes the K8s client
 func getClientSet() (*kubernetes.Clientset, error) {

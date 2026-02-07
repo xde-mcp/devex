@@ -12,6 +12,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -20,6 +22,7 @@ var ENABLE_MCP_SIDECAR = dotenv.EnvString("ENABLE_MCP_SIDECAR", "false") == "tru
 
 func CreateReplDeploymentAndService(userName, replId, template string) error {
 	clientset, _ := getClientSet()
+	dynamicClient, _ := getDynamicClient()
 	ctx := context.Background()
 
 	config, exists := models.TemplateConfigs[template]
@@ -194,22 +197,48 @@ func CreateReplDeploymentAndService(userName, replId, template string) error {
 		return fmt.Errorf("failed to create service: %w", err)
 	}
 
-	// 3. Ingress
+	// 3. Ingress Middleware (Traefik)
+	middlewareRes := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewares"}
+
+	middleware := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "traefik.io/v1alpha1",
+			"kind":       "Middleware",
+			"metadata": map[string]interface{}{
+				"name":      replId + "-stripprefix",
+				"namespace": "default",
+			},
+			"spec": map[string]interface{}{
+				"stripPrefix": map[string]interface{}{
+					"prefixes": func() []interface{} {
+						// Include both with and without trailing slash for better matching
+						p := []interface{}{"/" + replId, "/" + replId + "/"}
+						if ENABLE_MCP_SIDECAR {
+							p = append(p, "/mcp/"+replId, "/mcp/"+replId+"/")
+						}
+						return p
+					}(),
+				},
+			},
+		},
+	}
+
+	_, err = dynamicClient.Resource(middlewareRes).Namespace("default").Create(ctx, middleware, metav1.CreateOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to create middleware: %w", err)
+	}
+
+	// 4. Ingress
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: replId + "-ingress",
 			Annotations: map[string]string{
-				"cert-manager.io/cluster-issuer":                 "letsencrypt-cluster-issuer",
-				"nginx.ingress.kubernetes.io/use-regex":          "true",
-				"nginx.ingress.kubernetes.io/rewrite-target":     "/$2", // Captures group after the replId
-				"nginx.ingress.kubernetes.io/websocket-services": replId,
-				"nginx.ingress.kubernetes.io/ssl-redirect":       "false",
-				"nginx.ingress.kubernetes.io/proxy-read-timeout": "3600",
-				"nginx.ingress.kubernetes.io/proxy-send-timeout": "3600",
+				"kubernetes.io/ingress.class":                      "traefik",
+				"cert-manager.io/cluster-issuer":                   "letsencrypt-cluster-issuer",
+				"traefik.ingress.kubernetes.io/router.middlewares": fmt.Sprintf("default-%s-stripprefix@kubernetescrd", replId),
 			},
 		},
 		Spec: networkingv1.IngressSpec{
-			IngressClassName: strPtr("nginx"),
 			TLS: []networkingv1.IngressTLS{
 				{
 					Hosts:      []string{RUNNER_CLUSTER_IP},
@@ -224,8 +253,8 @@ func CreateReplDeploymentAndService(userName, replId, template string) error {
 							Paths: func() []networkingv1.HTTPIngressPath {
 								paths := []networkingv1.HTTPIngressPath{
 									{
-										Path:     fmt.Sprintf("/(%s)/(.*)", replId),
-										PathType: pathTypePtr(networkingv1.PathTypeImplementationSpecific),
+										Path:     "/" + replId,
+										PathType: pathTypePtr(networkingv1.PathTypePrefix),
 										Backend: networkingv1.IngressBackend{
 											Service: &networkingv1.IngressServiceBackend{
 												Name: replId,
@@ -239,8 +268,8 @@ func CreateReplDeploymentAndService(userName, replId, template string) error {
 
 								if ENABLE_MCP_SIDECAR {
 									paths = append(paths, networkingv1.HTTPIngressPath{
-										Path:     fmt.Sprintf("/mcp/(%s)/(.*)", replId),
-										PathType: pathTypePtr(networkingv1.PathTypeImplementationSpecific),
+										Path:     "/mcp/" + replId,
+										PathType: pathTypePtr(networkingv1.PathTypePrefix),
 										Backend: networkingv1.IngressBackend{
 											Service: &networkingv1.IngressServiceBackend{
 												Name: replId,

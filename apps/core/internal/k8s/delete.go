@@ -10,11 +10,13 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 )
 
 func DeleteReplDeploymentAndService(userName, replId string) error {
 	clientset, _ := getClientSet()
+	dynamicClient, _ := getDynamicClient()
 	ctx := context.Background()
 
 	bucket := dotenv.EnvString("S3_BUCKET", "devex")
@@ -31,10 +33,17 @@ func DeleteReplDeploymentAndService(userName, replId string) error {
 	}
 
 	// Step 2: Delete resources
+	middlewareRes := schema.GroupVersionResource{Group: "traefik.io", Version: "v1alpha1", Resource: "middlewares"}
 	for _, resource := range []struct {
 		name string
 		del  func() error
 	}{
+		{
+			name: "Middleware",
+			del: func() error {
+				return dynamicClient.Resource(middlewareRes).Namespace("default").Delete(ctx, replId+"-stripprefix", metav1.DeleteOptions{})
+			},
+		},
 		{
 			name: "Ingress",
 			del: func() error {

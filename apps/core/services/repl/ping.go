@@ -1,6 +1,7 @@
 package repl
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -14,13 +15,18 @@ func pingRunner(url string) error {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
 	for {
 		select {
 		case <-timeout:
 			return fmt.Errorf("timeout: no 'pong' response received from %s", url)
 
 		case <-ticker.C:
-			resp, err := http.Get(url)
+			resp, err := client.Get(url)
 			if err != nil {
 				log.Println("Ping failed:", err)
 				continue
