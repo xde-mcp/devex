@@ -60,21 +60,24 @@ docker swarm init
 
 ---
 
-### 3️⃣ Initialize Swarm
+### 3️⃣ Initialize Secrets
 
-Add Secrets using docker secrets
+Create a `./secrets` directory locally (do not commit it!) and add your secret values into individual `.txt` files. Then run the following commands:
 
 ```bash
-docker secret create spaces_access_key ./secrets/spaces_access_key.txt
-docker secret create spaces_secret_key ./secrets/spaces_secret_key.txt
+docker secret create s3_access_key ./secrets/s3_access_key.txt
+docker secret create s3_secret_key ./secrets/s3_secret_key.txt
 docker secret create redis_url ./secrets/redis_url.txt
 docker secret create github_client_id ./secrets/github_client_id.txt
 docker secret create github_client_secret ./secrets/github_client_secret.txt
+docker secret create gmail_user ./secrets/gmail_user.txt
+docker secret create gmail_password ./secrets/gmail_password.txt
+docker secret create resend_api_key ./secrets/resend_api_key.txt
 docker secret create session_secret ./secrets/session_secret.txt
 docker secret create kubeconfig_file ./secrets/kubeconfig.yaml
 ```
 
-> ℹ️ If you want to add more nodes, Docker will provide a token and command to join them.
+> 💡 **Tip**: Using files prevents your sensitive data from appearing in your shell history. Ensure the `./secrets` folder is added to your `.gitignore`.
 
 ---
 

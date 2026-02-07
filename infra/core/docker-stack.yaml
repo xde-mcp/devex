@@ -39,7 +39,10 @@ services:
   # - Load balancing and routing
   # ============================================================================
   reverse-proxy:
-    image: traefik:v3.4
+    # UPDATED: Using Traefik v3.6.7 which includes Docker API auto-negotiation
+    # This fixes compatibility with Docker 29+ (API version 1.44+)
+    # See: https://github.com/traefik/traefik/releases/tag/v3.6.1
+    image: traefik:v3.6.7
 
     # Traefik Configuration Commands
     command:
@@ -296,10 +299,16 @@ secrets:
 #    - Test cluster connectivity from container
 #    - Check RBAC permissions for service account
 #
+# 6. Docker API Version Issues (Docker 29+):
+#    - This stack uses Traefik v3.6.7 which auto-negotiates Docker API version
+#    - Compatible with Docker 29+ (API v1.44+) and earlier versions
+#    - If issues persist, check: docker service logs devex_reverse-proxy
+#
 # USEFUL COMMANDS:
 # - View service status: docker service ls
 # - Check service logs: docker service logs -f devex_<service>
 # - Scale service: docker service scale devex_core_service=3
 # - Update service: docker service update --image new_image devex_core_service
 # - Inspect service: docker service inspect devex_<service>
+# - Force update Traefik: docker service update --force devex_reverse-proxy
 # ==============================================================================
