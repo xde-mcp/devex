@@ -66,7 +66,7 @@ graph TB
 
     subgraph K8sCluster["☸️ Kubernetes Cluster"]
         direction TB
-        IngressController[🚪 Ingress NGINX Controller<br/>Traffic Routing]
+        IngressController[🚪 Traefik Ingress Controller<br/>Traffic Routing]
         CertManager[🔒 Cert Manager<br/>TLS Certificate Management]
 
         subgraph ReplResources["📦 Per-Repl Resources"]
@@ -160,7 +160,7 @@ sequenceDiagram
 
 * Contains:
 
-  * Ingress-NGINX setup
+  * Traefik (hostNetwork) setup
   * `cert-manager` + Let’s Encrypt for auto TLS
 * 📄 See [infra/k8s/README.md](./infra/k8s) for full setup instructions
 
@@ -203,7 +203,7 @@ sequenceDiagram
 | Backend       | GoLang (Echo/Fiber), Redis, S3 SDK |
 | Runner        | GoLang + PTY + WebSocket           |
 | Orchestration | Kubernetes, Docker, Docker Swarm   |
-| Networking    | Ingress NGINX + cert-manager       |
+| Networking    | Traefik + cert-manager       |
 | Auth          | GitHub OAuth                       |
 
 ---
