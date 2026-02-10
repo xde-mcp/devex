@@ -6,6 +6,7 @@ metadata:
 spec:
   secretName: tls-secret
   issuerRef:
+    # Production issuer. Use certificate-staging.yaml for initial validation.
     name: letsencrypt-cluster-issuer
     kind: ClusterIssuer
   commonName: repl.parthkapoor.me

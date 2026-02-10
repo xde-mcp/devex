@@ -1,0 +1,6 @@
+# Overlay values to force Traefik onto a dedicated ingress node.
+# Ensure at least one node is labeled:
+# kubectl label node <INGRESS_NODE_NAME> devex.ingress=true --overwrite
+
+nodeSelector:
+  devex.ingress: "true"

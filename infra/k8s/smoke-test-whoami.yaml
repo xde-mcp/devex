@@ -1,5 +1,5 @@
 ---
-# 1. The Application (Deployment)
+# 1. Test application
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +22,7 @@ spec:
             - containerPort: 80
 
 ---
-# 2. Internal Network Exposure (Service)
+# 2. Internal service
 apiVersion: v1
 kind: Service
 metadata:
@@ -37,19 +37,39 @@ spec:
     app: whoami
 
 ---
-# 3. Routing Rule (Ingress)
+# 3. Strip /test-repl prefix before forwarding to service
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: test-repl-stripprefix
+  namespace: default
+spec:
+  stripPrefix:
+    prefixes:
+      - /test-repl
+      - /test-repl/
+
+---
+# 4. Host/path ingress route for smoke testing
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: whoami-ingress
   namespace: default
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/router.middlewares: default-test-repl-stripprefix@kubernetescrd
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - repl.parthkapoor.me
+      secretName: tls-secret
   rules:
-    - host: whoami.local  # We will fake this domain in the test
+    - host: repl.parthkapoor.me
       http:
         paths:
-          - path: /
+          - path: /test-repl
             pathType: Prefix
             backend:
               service:
